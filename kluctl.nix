@@ -142,6 +142,10 @@ in
         "deployment.yaml" = {
           content = builtins.toJSON config.kluctl.deployment;
         };
+        # Prevent Jinja2 templating of generated YAML files
+        "default/.templateignore" = {
+          content = "easykubenix.yaml\n";
+        };
         # Don't apply prioritized resources again.
         "default/easykubenix.yaml" = {
           content = builtins.toJSON {
@@ -160,6 +164,13 @@ in
           apiVersion = "v1";
           kind = "List";
           items = lib.filter (v: v.kind == n) config.kubernetes.generated;
+        };
+      }) cfg.resourcePriority)
+      # Prioritized resource .templateignore files
+      // (lib.mapAttrs' (n: v: {
+        name = "prio-${toString v}/.templateignore";
+        value = {
+          content = "*.yaml\n";
         };
       }) cfg.resourcePriority)
       # Other user-supplied files
